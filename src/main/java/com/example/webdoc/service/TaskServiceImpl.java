@@ -41,8 +41,21 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public String getStatusForTask(String taskName) {
-        // TODO Auto-generated method stub
-        return null;
+        Task task  = null;
+        for (Map.Entry<Task, Status> entry : taskStore.entrySet()) {
+            if (entry.getKey().getTaskName().equals(taskName)) {
+                task = entry.getKey();
+            }
+        }
+        String statSummary = "Task , "+ taskName +" for website "+task.getWebsite() +"\n "+ "Status ==== ";
+
+        if (task.getStatus().isUp()) {
+            statSummary+="Has been Up for ";
+        } else {
+            statSummary+="Has been Down for ";
+        }
+        statSummary += task.getStatus().getTimeElapsed()+"";
+        return statSummary;
     }
 
 }
