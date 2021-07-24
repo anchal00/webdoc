@@ -18,7 +18,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class TaskServiceImpl implements TaskService {
 
-    Map<Task, Status> taskStore = new HashMap<>();
+    private Map<Task, Status> taskStore = new HashMap<>();
 
     @Autowired
     private ThreadPoolTaskScheduler scheduler;
@@ -26,35 +26,55 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public boolean createTaskForUser(Task task) {
         Status status = new Status();
+
         status.setTaskName(task.getTaskName());
         status.setUp(false);
-        status.setTimeElapsed(1);
+        status.setTimeElapsed(0);
 
         task.setStatus(status);
+
         taskStore.put(task, status);
 
-        int frequency = task.getFrequency();
+        Integer frequency = task.getFrequency();
 
-        scheduler.scheduleWithFixedDelay(new ScheduledTask(task), frequency);
+        int frequencyInMillisec = getFreqInMilliSeconds(frequency, task.getInHours());
+        scheduler.scheduleWithFixedDelay(new ScheduledTask(task), frequencyInMillisec);
+
         return true;
+    }
+
+    private int getFreqInMilliSeconds(Integer frequency, Boolean isInHours) {
+
+        if (isInHours) {
+            return frequency * 60 * 60 * 1000;
+        }
+        return frequency * 60 * 1000;
     }
 
     @Override
     public String getStatusForTask(String taskName) {
-        Task task  = null;
+        Task task = null;
         for (Map.Entry<Task, Status> entry : taskStore.entrySet()) {
             if (entry.getKey().getTaskName().equals(taskName)) {
                 task = entry.getKey();
             }
         }
-        String statSummary = "Task , "+ taskName +" for website "+task.getWebsite() +"\n "+ "Status ==== ";
+        String statSummary = "Task , " + taskName + " for website " + task.getWebsite() + "\n " + "Status ==== ";
 
         if (task.getStatus().isUp()) {
-            statSummary+="Has been Up for ";
+            statSummary += "Has been Up for ";
         } else {
-            statSummary+="Has been Down for ";
+            statSummary += "Has been Down for ";
         }
-        statSummary += task.getStatus().getTimeElapsed()+"";
+        int timeElapsed = task.getStatus().getTimeElapsed();
+
+        statSummary += (timeElapsed) + "";
+
+        if (task.getInHours()) {
+            statSummary += " hours";
+        } else {
+            statSummary += " minutes";
+        }
         return statSummary;
     }
 

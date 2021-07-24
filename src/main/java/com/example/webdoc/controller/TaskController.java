@@ -1,8 +1,12 @@
 package com.example.webdoc.controller;
 
 import java.util.Map;
+
+import javax.validation.Valid;
+
 import com.example.webdoc.model.Task;
 import com.example.webdoc.service.TaskService;
+import com.example.webdoc.service.TaskServiceImpl;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -22,10 +26,11 @@ public class TaskController {
     private TaskService taskService;
 
     @PostMapping(value = "/user/{userId}")
-    public ResponseEntity<Task> createTask(@RequestBody Task task) {
+    public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         taskService.createTaskForUser(task);
         return new ResponseEntity<>(task,HttpStatus.OK);
     }
+    
 
     @GetMapping(value = "/user/{userId}")
     public ResponseEntity<String> getTaskInfo(@RequestParam("taskName") String taskName){

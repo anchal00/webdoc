@@ -18,12 +18,14 @@ public class ScheduledTask implements Runnable {
     @Override
     public void run() {
        
-        boolean isUp = isWebsiteUp();
-        System.out.println("DEBUG#1 ::: Website -- "+isUp);
+        boolean isUp = isWebsiteUp();        
         System.out.println("task "+ task.getTaskName() +" ran at - "+ LocalDateTime.now());
+
         if (task.getStatus().isUp() == isUp) {
             int i = task.getStatus().getTimeElapsed();
-            i++;
+
+            i+= (task.getFrequency());
+
             task.getStatus().setTimeElapsed(i);
         } else {
             task.getStatus().setUp(isUp);
