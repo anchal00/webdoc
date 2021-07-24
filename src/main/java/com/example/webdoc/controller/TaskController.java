@@ -4,6 +4,7 @@ import java.util.Map;
 
 import javax.validation.Valid;
 
+import com.example.webdoc.model.Summary;
 import com.example.webdoc.model.Task;
 import com.example.webdoc.service.TaskService;
 import com.example.webdoc.service.TaskServiceImpl;
@@ -28,14 +29,17 @@ public class TaskController {
     @PostMapping(value = "/user/{userId}")
     public ResponseEntity<Task> createTask(@Valid @RequestBody Task task) {
         taskService.createTaskForUser(task);
-        return new ResponseEntity<>(task,HttpStatus.OK);
+        return new ResponseEntity<>(HttpStatus.CREATED);
     }
     
 
     @GetMapping(value = "/user/{userId}")
-    public ResponseEntity<String> getTaskInfo(@RequestParam("taskName") String taskName){
+    public ResponseEntity<Summary> getTaskInfo(@RequestParam("taskName") String taskName){
         
-        String p = taskService.getStatusForTask(taskName);
-        return new ResponseEntity<>(p, HttpStatus.OK);
+        Summary taskSummary = taskService.getTaskSummary(taskName);
+        if (taskSummary == null) {
+            return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+        }
+        return new ResponseEntity<>(taskSummary, HttpStatus.OK);
     }
 }

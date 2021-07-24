@@ -1,15 +1,12 @@
 package com.example.webdoc.service;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import com.example.webdoc.model.Status;
+import com.example.webdoc.model.Summary;
 import com.example.webdoc.model.Task;
-import com.example.webdoc.util.ScheduledTask;
+import com.example.webdoc.scheduler.ScheduledTask;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
@@ -25,6 +22,18 @@ public class TaskServiceImpl implements TaskService {
 
     @Override
     public boolean createTaskForUser(Task task) {
+        updateTask(task);
+
+        Integer frequency = task.getFrequency();
+
+        int frequencyInMillisec = getFreqInMilliSeconds(frequency, task.getInHours());
+
+        scheduler.scheduleWithFixedDelay(new ScheduledTask(task), frequencyInMillisec);
+
+        return true;
+    }
+
+    private void updateTask(Task task) {
         Status status = new Status();
 
         status.setTaskName(task.getTaskName());
@@ -34,13 +43,6 @@ public class TaskServiceImpl implements TaskService {
         task.setStatus(status);
 
         taskStore.put(task, status);
-
-        Integer frequency = task.getFrequency();
-
-        int frequencyInMillisec = getFreqInMilliSeconds(frequency, task.getInHours());
-        scheduler.scheduleWithFixedDelay(new ScheduledTask(task), frequencyInMillisec);
-
-        return true;
     }
 
     private int getFreqInMilliSeconds(Integer frequency, Boolean isInHours) {
@@ -52,30 +54,40 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public String getStatusForTask(String taskName) {
+    public Summary getTaskSummary(String taskName) {
         Task task = null;
         for (Map.Entry<Task, Status> entry : taskStore.entrySet()) {
             if (entry.getKey().getTaskName().equals(taskName)) {
                 task = entry.getKey();
             }
         }
-        String statSummary = "Task , " + taskName + " for website " + task.getWebsite() + "\n " + "Status ==== ";
+
+        if (task == null) {
+            return null;
+
+        }
+        Summary preparedSummaryForTask = prepareSummary(task);
+        return preparedSummaryForTask;
+    }
+
+    private Summary prepareSummary(Task task) {
+        String taskSummary = "Task ," + task.getTaskName() + " for website " + task.getWebsite();
 
         if (task.getStatus().isUp()) {
-            statSummary += "Has been Up for ";
+            taskSummary += " has been Up for ";
         } else {
-            statSummary += "Has been Down for ";
+            taskSummary += " has been Down for ";
         }
         int timeElapsed = task.getStatus().getTimeElapsed();
 
-        statSummary += (timeElapsed) + "";
+        taskSummary += (timeElapsed) + "";
 
         if (task.getInHours()) {
-            statSummary += " hours";
+            taskSummary += " hour(s)";
         } else {
-            statSummary += " minutes";
+            taskSummary += " minute(s)";
         }
-        return statSummary;
+        return new Summary(taskSummary);
     }
 
 }
